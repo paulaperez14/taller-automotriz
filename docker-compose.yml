@@ -1,0 +1,279 @@
+version: '3.8'
+
+services:
+  # ========================================
+  # BASES DE DATOS MYSQL (Una por microservicio)
+  # ========================================
+  
+  mysql-autenticacion:
+    image: mysql:8.0
+    container_name: mysql-autenticacion
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_autenticacion
+      MYSQL_USER: user_autenticacion
+      MYSQL_PASSWORD: pass_autenticacion
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_autenticacion_data:/var/lib/mysql
+      - ./docker/mysql/init-autenticacion.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-agendamiento:
+    image: mysql:8.0
+    container_name: mysql-agendamiento
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_agendamiento
+      MYSQL_USER: user_agendamiento
+      MYSQL_PASSWORD: pass_agendamiento
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_agendamiento_data:/var/lib/mysql
+      - ./docker/mysql/init-agendamiento.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-reparaciones:
+    image: mysql:8.0
+    container_name: mysql-reparaciones
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_reparaciones
+      MYSQL_USER: user_reparaciones
+      MYSQL_PASSWORD: pass_reparaciones
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_reparaciones_data:/var/lib/mysql
+      - ./docker/mysql/init-reparaciones.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-repuestos:
+    image: mysql:8.0
+    container_name: mysql-repuestos
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_repuestos
+      MYSQL_USER: user_repuestos
+      MYSQL_PASSWORD: pass_repuestos
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_repuestos_data:/var/lib/mysql
+      - ./docker/mysql/init-repuestos.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-clientes-vehiculos:
+    image: mysql:8.0
+    container_name: mysql-clientes-vehiculos
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_clientes_vehiculos
+      MYSQL_USER: user_clientes
+      MYSQL_PASSWORD: pass_clientes
+    ports:
+      - "3311:3306"
+    volumes:
+      - mysql_clientes_data:/var/lib/mysql
+      - ./docker/mysql/init-clientes-vehiculos.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-facturacion-pagos:
+    image: mysql:8.0
+    container_name: mysql-facturacion-pagos
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_facturacion_pagos
+      MYSQL_USER: user_facturacion
+      MYSQL_PASSWORD: pass_facturacion
+    ports:
+      - "3312:3306"
+    volumes:
+      - mysql_facturacion_data:/var/lib/mysql
+      - ./docker/mysql/init-facturacion-pagos.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-panel-administrativo:
+    image: mysql:8.0
+    container_name: mysql-panel-administrativo
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: db_panel_administrativo
+      MYSQL_USER: user_panel
+      MYSQL_PASSWORD: pass_panel
+    ports:
+      - "3313:3306"
+    volumes:
+      - mysql_panel_data:/var/lib/mysql
+      - ./docker/mysql/init-panel-administrativo.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # RABBITMQ - Message Broker
+  # ========================================
+  
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    ports:
+      - "5672:5672"    # Puerto AMQP
+      - "15672:15672"  # Puerto Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - taller-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # PHPMYADMIN (Opcional - Para desarrollo)
+  # ========================================
+  
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql-reparaciones
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    networks:
+      - taller-network
+    depends_on:
+      - mysql-reparaciones
+      - mysql-agendamiento
+      - mysql-clientes-vehiculos
+
+  # ========================================
+  # MICROSERVICIOS (Descomentar cuando estén listos)
+  # ========================================
+
+  # ms-autenticacion:
+  #   build:
+  #     context: ./microservices/ms-autenticacion
+  #     dockerfile: Dockerfile
+  #   container_name: ms-autenticacion
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 3001
+  #     DB_HOST: mysql-autenticacion
+  #     DB_PORT: 3306
+  #     DB_NAME: db_autenticacion
+  #     DB_USER: user_autenticacion
+  #     DB_PASSWORD: pass_autenticacion
+  #     JWT_SECRET: tu_secreto_jwt_aqui_cambiar_en_produccion
+  #     RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+  #   ports:
+  #     - "3001:3001"
+  #   volumes:
+  #     - ./microservices/ms-autenticacion:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - taller-network
+  #   depends_on:
+  #     mysql-autenticacion:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # ms-reparaciones:
+  #   build:
+  #     context: ./microservices/ms-reparaciones
+  #     dockerfile: Dockerfile
+  #   container_name: ms-reparaciones
+  #   environment:
+  #     NODE_ENV: development
+  #     PORT: 3003
+  #     DB_HOST: mysql-reparaciones
+  #     DB_PORT: 3306
+  #     DB_NAME: db_reparaciones
+  #     DB_USER: user_reparaciones
+  #     DB_PASSWORD: pass_reparaciones
+  #     RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+  #   ports:
+  #     - "3003:3003"
+  #   volumes:
+  #     - ./microservices/ms-reparaciones:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - taller-network
+  #   depends_on:
+  #     mysql-reparaciones:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # ... (Agregar los demás microservicios siguiendo el mismo patrón)
+
+# ========================================
+# NETWORKS
+# ========================================
+
+networks:
+  taller-network:
+    driver: bridge
+
+# ========================================
+# VOLUMES
+# ========================================
+
+volumes:
+  mysql_autenticacion_data:
+  mysql_agendamiento_data:
+  mysql_reparaciones_data:
+  mysql_repuestos_data:
+  mysql_clientes_data:
+  mysql_facturacion_data:
+  mysql_panel_data:
+  rabbitmq_data:
