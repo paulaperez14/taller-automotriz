@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS vehiculos (
     INDEX idx_marca_modelo (marca, modelo),
     INDEX idx_vin (vin),
     
-    CHECK (anio >= 1900 AND anio <= YEAR(CURDATE()) + 1),
+    CHECK (anio >= 1900 AND anio <= 2100),
     CHECK (kilometraje_actual >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

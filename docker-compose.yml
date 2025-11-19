@@ -196,65 +196,237 @@ services:
       - mysql-clientes-vehiculos
 
   # ========================================
-  # MICROSERVICIOS (Descomentar cuando estén listos)
+  # MICROSERVICIOS
   # ========================================
 
-  # ms-autenticacion:
-  #   build:
-  #     context: ./microservices/ms-autenticacion
-  #     dockerfile: Dockerfile
-  #   container_name: ms-autenticacion
-  #   environment:
-  #     NODE_ENV: development
-  #     PORT: 3001
-  #     DB_HOST: mysql-autenticacion
-  #     DB_PORT: 3306
-  #     DB_NAME: db_autenticacion
-  #     DB_USER: user_autenticacion
-  #     DB_PASSWORD: pass_autenticacion
-  #     JWT_SECRET: tu_secreto_jwt_aqui_cambiar_en_produccion
-  #     RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
-  #   ports:
-  #     - "3001:3001"
-  #   volumes:
-  #     - ./microservices/ms-autenticacion:/app
-  #     - /app/node_modules
-  #   networks:
-  #     - taller-network
-  #   depends_on:
-  #     mysql-autenticacion:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
+  ms-autenticacion:
+    build:
+      context: ./microservices/ms-autenticacion
+      dockerfile: Dockerfile
+    container_name: ms-autenticacion
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: mysql-autenticacion
+      DB_PORT: 3306
+      DB_NAME: db_autenticacion
+      DB_USER: user_autenticacion
+      DB_PASSWORD: pass_autenticacion
+      JWT_SECRET: tu_secreto_jwt_aqui_cambiar_en_produccion
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./microservices/ms-autenticacion:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-autenticacion:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
-  # ms-reparaciones:
-  #   build:
-  #     context: ./microservices/ms-reparaciones
-  #     dockerfile: Dockerfile
-  #   container_name: ms-reparaciones
-  #   environment:
-  #     NODE_ENV: development
-  #     PORT: 3003
-  #     DB_HOST: mysql-reparaciones
-  #     DB_PORT: 3306
-  #     DB_NAME: db_reparaciones
-  #     DB_USER: user_reparaciones
-  #     DB_PASSWORD: pass_reparaciones
-  #     RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
-  #   ports:
-  #     - "3003:3003"
-  #   volumes:
-  #     - ./microservices/ms-reparaciones:/app
-  #     - /app/node_modules
-  #   networks:
-  #     - taller-network
-  #   depends_on:
-  #     mysql-reparaciones:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
+  ms-agendamiento:
+    build:
+      context: ./microservices/ms-agendamiento
+      dockerfile: Dockerfile
+    container_name: ms-agendamiento
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DB_HOST: mysql-agendamiento
+      DB_PORT: 3306
+      DB_NAME: db_agendamiento
+      DB_USER: user_agendamiento
+      DB_PASSWORD: pass_agendamiento
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./microservices/ms-agendamiento:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-agendamiento:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
-  # ... (Agregar los demás microservicios siguiendo el mismo patrón)
+  ms-reparaciones:
+    build:
+      context: ./microservices/ms-reparaciones
+      dockerfile: Dockerfile
+    container_name: ms-reparaciones
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DB_HOST: mysql-reparaciones
+      DB_PORT: 3306
+      DB_NAME: db_reparaciones
+      DB_USER: user_reparaciones
+      DB_PASSWORD: pass_reparaciones
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./microservices/ms-reparaciones:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-reparaciones:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms-repuestos:
+    build:
+      context: ./microservices/ms-repuestos
+      dockerfile: Dockerfile
+    container_name: ms-repuestos
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DB_HOST: mysql-repuestos
+      DB_PORT: 3306
+      DB_NAME: db_repuestos
+      DB_USER: user_repuestos
+      DB_PASSWORD: pass_repuestos
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./microservices/ms-repuestos:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-repuestos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms-clientes-vehiculos:
+    build:
+      context: ./microservices/ms-clientes-vehiculos
+      dockerfile: Dockerfile
+    container_name: ms-clientes-vehiculos
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      DB_HOST: mysql-clientes-vehiculos
+      DB_PORT: 3306
+      DB_NAME: db_clientes_vehiculos
+      DB_USER: user_clientes
+      DB_PASSWORD: pass_clientes
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3005:3005"
+    volumes:
+      - ./microservices/ms-clientes-vehiculos:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-clientes-vehiculos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms-facturacion-pagos:
+    build:
+      context: ./microservices/ms-facturacion-pagos
+      dockerfile: Dockerfile
+    container_name: ms-facturacion-pagos
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DB_HOST: mysql-facturacion-pagos
+      DB_PORT: 3306
+      DB_NAME: db_facturacion_pagos
+      DB_USER: user_facturacion
+      DB_PASSWORD: pass_facturacion
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3006:3006"
+    volumes:
+      - ./microservices/ms-facturacion-pagos:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-facturacion-pagos:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ms-panel-administrativo:
+    build:
+      context: ./microservices/ms-panel-administrativo
+      dockerfile: Dockerfile
+    container_name: ms-panel-administrativo
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DB_HOST: mysql-panel-administrativo
+      DB_PORT: 3306
+      DB_NAME: db_panel_administrativo
+      DB_USER: user_panel
+      DB_PASSWORD: pass_panel
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+    ports:
+      - "3007:3007"
+    volumes:
+      - ./microservices/ms-panel-administrativo:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      mysql-panel-administrativo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  # ========================================
+  # API GATEWAY
+  # ========================================
+
+  api-gateway:
+    build:
+      context: ./infrastructure/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      AUTH_SERVICE_URL: http://ms-autenticacion:3001
+      AGENDAMIENTO_SERVICE_URL: http://ms-agendamiento:3002
+      REPARACIONES_SERVICE_URL: http://ms-reparaciones:3003
+      REPUESTOS_SERVICE_URL: http://ms-repuestos:3004
+      CLIENTES_SERVICE_URL: http://ms-clientes-vehiculos:3005
+      FACTURACION_SERVICE_URL: http://ms-facturacion-pagos:3006
+      PANEL_SERVICE_URL: http://ms-panel-administrativo:3007
+      JWT_SECRET: tu_secreto_jwt_aqui_cambiar_en_produccion
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./infrastructure/api-gateway:/app
+      - /app/node_modules
+    networks:
+      - taller-network
+    depends_on:
+      - ms-autenticacion
+      - ms-agendamiento
+      - ms-reparaciones
+      - ms-repuestos
+      - ms-clientes-vehiculos
+      - ms-facturacion-pagos
+      - ms-panel-administrativo
+
 
 # ========================================
 # NETWORKS
