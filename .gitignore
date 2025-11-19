@@ -47,3 +47,6 @@ coverage/
 # Logs
 logs/
 *.log
+
+# Frontend (temporal - no subir hasta estar estable)
+frontend/
