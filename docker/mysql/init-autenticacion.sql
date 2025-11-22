@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    rol VARCHAR(50) NOT NULL COMMENT 'ADMINISTRADOR, MECANICO, RECEPCIONISTA',
+    rol VARCHAR(50) NOT NULL COMMENT 'ADMINISTRADOR, MECANICO, RECEPCIONISTA, CLIENTE',
     activo BOOLEAN DEFAULT TRUE,
     ultimo_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     INDEX idx_email (email),
     INDEX idx_rol (rol),
     
-    CHECK (rol IN ('ADMINISTRADOR', 'MECANICO', 'RECEPCIONISTA'))
+    CHECK (rol IN ('ADMINISTRADOR', 'MECANICO', 'RECEPCIONISTA', 'CLIENTE'))
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS sesiones (
@@ -40,7 +40,10 @@ CREATE TABLE IF NOT EXISTS sesiones (
     INDEX idx_expira (expira_en)
 ) ENGINE=InnoDB;
 
--- Usuario admin de prueba (password: admin123)
+-- Usuarios de prueba (password: admin123 / mecanico123 / cliente123)
 INSERT INTO usuarios (usuario_id, username, password_hash, email, rol) VALUES
-('11111111-1111-1111-1111-111111111111', 'admin', '$2b$10$rC3qKqZ5qZ5qZ5qZ5qZ5qupNqYrD5JQqJQqJQqJQqJQqJQqJQqJQq', 'admin@taller.com', 'ADMINISTRADOR'),
-('22222222-2222-2222-2222-222222222222', 'mecanico1', '$2b$10$rC3qKqZ5qZ5qZ5qZ5qZ5qupNqYrD5JQqJQqJQqJQqJQqJQqJQqJQq', 'carlos.martinez@taller.com', 'MECANICO');
+('11111111-1111-1111-1111-111111111111', 'admin', '$2b$10$gJyQ58hlsDoAHPJ4XagtxeFmS5xo3BBviw.pGJxCe0FDREIr55/rW', 'admin@taller.com', 'ADMINISTRADOR'),
+('22222222-2222-2222-2222-222222222222', 'mecanico', '$2b$10$gJyQ58hlsDoAHPJ4XagtxeFmS5xo3BBviw.pGJxCe0FDREIr55/rW', 'mecanico@taller.com', 'MECANICO'),
+('156c9b58-234a-43e2-b67d-126d6572a712', 'cliente1', '$2b$10$5nZYv9rKc/NZEyiEjO.RZu7vOqS9KqMF2nJXqN7YPqVfN8hI8wD3u', 'cliente@taller.com', 'CLIENTE')
+ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash);
+

@@ -12,13 +12,16 @@ router.post('/',
         body('nombres').notEmpty().trim(),
         body('apellidos').notEmpty().trim(),
         body('telefono').notEmpty().trim(),
-        body('email').optional().isEmail()
+        body('email').optional().trim()
     ],
     ClientesController.crear
 );
 
 // Listar clientes
 router.get('/', ClientesController.listar);
+
+// Buscar cliente por identificación
+router.get('/identificacion/:identificacion', ClientesController.buscarPorIdentificacion);
 
 // Obtener cliente por ID
 router.get('/:id',
@@ -33,7 +36,7 @@ router.put('/:id',
         body('nombres').optional().trim(),
         body('apellidos').optional().trim(),
         body('telefono').optional().trim(),
-        body('email').optional().isEmail()
+        body('email').optional().trim()
     ],
     ClientesController.actualizar
 );

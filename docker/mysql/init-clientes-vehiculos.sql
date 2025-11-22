@@ -3,6 +3,9 @@
 -- Microservicio: ms-clientes-vehiculos
 -- ========================================
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 USE db_clientes_vehiculos;
 
 -- ========================================
@@ -41,6 +44,9 @@ CREATE TABLE IF NOT EXISTS vehiculos (
     modelo VARCHAR(50) NOT NULL,
     anio INT NOT NULL,
     color VARCHAR(30) NULL,
+    tipo_vehiculo VARCHAR(50) DEFAULT 'AUTOMOVIL',
+    numero_motor VARCHAR(100) NULL,
+    numero_chasis VARCHAR(100) NULL,
     vin VARCHAR(100) NULL UNIQUE COMMENT 'Vehicle Identification Number',
     kilometraje_actual INT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -83,22 +89,8 @@ CREATE TABLE IF NOT EXISTS historial_servicios (
 -- DATOS DE PRUEBA
 -- ========================================
 
--- Clientes de prueba
-INSERT INTO clientes (cliente_id, tipo_identificacion, identificacion, nombres, apellidos, telefono, email, direccion, ciudad) VALUES
-('770e8400-e29b-41d4-a716-446655440001', 'CEDULA', '1234567890', 'Juan', 'Pérez', '+57 300 1234567', 'juan.perez@email.com', 'Calle 10 #20-30', 'Sincelejo'),
-('770e8400-e29b-41d4-a716-446655440002', 'CEDULA', '0987654321', 'María', 'García', '+57 310 9876543', 'maria.garcia@email.com', 'Carrera 5 #15-25', 'Sincelejo'),
-('770e8400-e29b-41d4-a716-446655440003', 'NIT', '900123456-7', 'Empresa Transportes S.A.', '', '+57 320 5551234', 'info@transportes.com', 'Avenida Principal #100-50', 'Sincelejo');
-
--- Vehículos de prueba
-INSERT INTO vehiculos (vehiculo_id, cliente_id, placa, marca, modelo, anio, color, vin, kilometraje_actual) VALUES
-('880e8400-e29b-41d4-a716-446655440001', '770e8400-e29b-41d4-a716-446655440001', 'ABC123', 'Toyota', 'Corolla', 2020, 'Blanco', '1HGBH41JXMN109186', 45000),
-('880e8400-e29b-41d4-a716-446655440002', '770e8400-e29b-41d4-a716-446655440001', 'XYZ789', 'Chevrolet', 'Spark', 2019, 'Rojo', '2HGBH41JXMN109187', 62000),
-('880e8400-e29b-41d4-a716-446655440003', '770e8400-e29b-41d4-a716-446655440002', 'DEF456', 'Mazda', 'CX-5', 2021, 'Gris', '3HGBH41JXMN109188', 28000),
-('880e8400-e29b-41d4-a716-446655440004', '770e8400-e29b-41d4-a716-446655440003', 'GHI789', 'Mercedes Benz', 'Sprinter', 2018, 'Blanco', '4HGBH41JXMN109189', 125000);
-
--- Historial de servicios de prueba
-INSERT INTO historial_servicios (historial_id, vehiculo_id, orden_servicio_id, fecha, tipo_servicio, descripcion, costo, kilometraje) VALUES
-('aa0e8400-e29b-41d4-a716-446655440001', '880e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440001', CURDATE(), 'MANTENIMIENTO_PREVENTIVO', 'Cambio de aceite y revisión general', 150000.00, 45000);
+-- DATOS DE PRUEBA
+-- Sin datos de prueba de clientes, vehículos ni historial
 
 -- ========================================
 -- VISTAS ÚTILES

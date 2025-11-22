@@ -4,7 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const ordenesRoutes = require('./infrastructure/api/routes/ordenesRoutes');
 const { initializePool } = require('./infrastructure/database/connection');
-const { connectRabbitMQ } = require('./infrastructure/messaging/rabbitmq');
+const { connectRabbitMQ, subscribeToAppointmentEvents } = require('./infrastructure/messaging/rabbitmq');
+const OrdenEventHandler = require('./application/services/OrdenEventHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -37,6 +38,11 @@ const startServer = async () => {
 
         await connectRabbitMQ();
         console.log('✅ RabbitMQ connected');
+
+        // Suscribirse a eventos de citas completadas
+        await subscribeToAppointmentEvents((event) => {
+            return OrdenEventHandler.handleCitaCompletada(event);
+        });
 
         app.listen(PORT, () => {
             console.log(`🚀 ms-reparaciones running on port ${PORT}`);

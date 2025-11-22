@@ -18,8 +18,7 @@ router.post('/register',
 // Login
 router.post('/login',
     [
-        body('username').notEmpty(),
-        body('password').notEmpty()
+        body('password').notEmpty().withMessage('Password es requerido')
     ],
     AuthController.login
 );

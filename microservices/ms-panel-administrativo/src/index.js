@@ -6,6 +6,7 @@ const { initializePool } = require('./infrastructure/database/connection');
 const { connectRabbitMQ } = require('./infrastructure/messaging/rabbitmq');
 const dashboardRoutes = require('./infrastructure/api/routes/dashboardRoutes');
 const reportesRoutes = require('./infrastructure/api/routes/reportesRoutes');
+const catalogoServiciosRoutes = require('./infrastructure/api/routes/catalogoServiciosRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3007;
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reportes', reportesRoutes);
+app.use('/api/servicios', catalogoServiciosRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

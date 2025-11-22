@@ -79,6 +79,18 @@ class ClientesController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    async buscarPorIdentificacion(req, res) {
+        try {
+            const cliente = await ClienteService.buscarPorIdentificacion(req.params.identificacion);
+            if (!cliente) {
+                return res.status(404).json({ error: 'Cliente no encontrado' });
+            }
+            res.json({ data: cliente });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 module.exports = new ClientesController();

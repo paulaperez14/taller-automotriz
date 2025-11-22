@@ -4,13 +4,18 @@ class CitaRepository {
     async create(cita) {
         const pool = getPool();
         const [result] = await pool.query(
-            `INSERT INTO citas (cita_id, cliente_id, vehiculo_id, mecanico_id, fecha, hora, 
-       duracion_estimada, motivo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO citas (cita_id, cliente_id, vehiculo_id, mecanico_id, sede_id, servicio_id, 
+       nombre_servicio, precio_servicio, fecha, hora, duracion_estimada, motivo, estado) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 cita.cita_id,
                 cita.cliente_id,
                 cita.vehiculo_id,
                 cita.mecanico_id,
+                cita.sede_id || null,
+                cita.servicio_id || null,
+                cita.nombre_servicio || null,
+                cita.precio_servicio || null,
                 cita.fecha,
                 cita.hora,
                 cita.duracion_estimada,
@@ -53,6 +58,11 @@ class CitaRepository {
         if (filtros.mecanico_id) {
             query += ' AND mecanico_id = ?';
             params.push(filtros.mecanico_id);
+        }
+
+        if (filtros.sede_id) {
+            query += ' AND sede_id = ?';
+            params.push(filtros.sede_id);
         }
 
         query += ' ORDER BY fecha DESC, hora DESC LIMIT ? OFFSET ?';
@@ -105,7 +115,7 @@ class CitaRepository {
         );
     }
 
-    async verificarConflicto(fecha, hora, duracion, mecanico_id = null, excluir_cita_id = null) {
+    async verificarConflicto(fecha, hora, duracion, mecanico_id = null, sede_id = null, excluir_cita_id = null) {
         const pool = getPool();
 
         // Calcular hora fin
@@ -119,6 +129,11 @@ class CitaRepository {
       AND estado IN ('PROGRAMADA', 'CONFIRMADA')
     `;
         const params = [fecha];
+
+        if (sede_id) {
+            query += ' AND sede_id = ?';
+            params.push(sede_id);
+        }
 
         if (mecanico_id) {
             query += ' AND mecanico_id = ?';

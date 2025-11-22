@@ -25,10 +25,23 @@ class AuthController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { username, password } = req.body;
-            const result = await AuthService.login(username, password, req.ip, req.headers['user-agent']);
+            // Aceptar tanto username como email
+            const { username, email, password } = req.body;
+            const loginIdentifier = email || username;
 
-            res.json({ message: 'Login exitoso', data: result });
+            if (!loginIdentifier || !password) {
+                return res.status(400).json({ error: 'Se requiere email/username y contraseña' });
+            }
+
+            const result = await AuthService.login(loginIdentifier, password, req.ip, req.headers['user-agent']);
+
+            res.json({
+                message: 'Login exitoso',
+                token: result.token,
+                usuario: result.usuario,
+                refreshToken: result.refreshToken,
+                expiresIn: result.expiresIn
+            });
         } catch (error) {
             res.status(401).json({ error: error.message });
         }

@@ -26,8 +26,8 @@ class CitasController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { page = 1, limit = 10, fecha, estado, cliente_id, mecanico_id } = req.query;
-            const filtros = { fecha, estado, cliente_id, mecanico_id };
+            const { page = 1, limit = 10, fecha, estado, cliente_id, mecanico_id, sede_id } = req.query;
+            const filtros = { fecha, estado, cliente_id, mecanico_id, sede_id };
 
             const citas = await CitaService.listar(page, limit, filtros);
             res.json({ data: citas });
@@ -91,8 +91,12 @@ class CitasController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            await CitaService.cambiarEstado(req.params.id, 'CONFIRMADA');
-            res.json({ message: 'Cita confirmada exitosamente' });
+            const resultado = await CitaService.cambiarEstado(req.params.id, 'CONFIRMADA');
+            res.json({
+                message: 'Cita confirmada exitosamente',
+                credenciales: resultado.credenciales || null,
+                cita: resultado.cita
+            });
         } catch (error) {
             res.status(400).json({ error: error.message });
         }

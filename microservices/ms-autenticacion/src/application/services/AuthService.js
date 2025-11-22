@@ -50,9 +50,13 @@ class AuthService {
         };
     }
 
-    async login(username, password, ipAddress, userAgent) {
-        // Buscar usuario
-        const usuario = await UserRepository.findByUsername(username);
+    async login(usernameOrEmail, password, ipAddress, userAgent) {
+        // Buscar usuario por username o email
+        let usuario = await UserRepository.findByUsername(usernameOrEmail);
+        if (!usuario) {
+            usuario = await UserRepository.findByEmail(usernameOrEmail);
+        }
+
         if (!usuario) {
             throw new Error('Credenciales inválidas');
         }

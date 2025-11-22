@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS facturas_pagos (
     subtotal DECIMAL(10,2) NOT NULL,
     impuestos DECIMAL(10,2) NOT NULL,
     total DECIMAL(10,2) NOT NULL,
+    metodo_pago VARCHAR(50) NULL COMMENT 'EFECTIVO, TARJETA, TRANSFERENCIA, OTRO',
+    notas TEXT NULL,
     estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -24,7 +26,8 @@ CREATE TABLE IF NOT EXISTS facturas_pagos (
     INDEX idx_cliente (cliente_id),
     INDEX idx_estado (estado),
     
-    CHECK (estado IN ('PENDIENTE', 'PAGADA', 'ANULADA'))
+    CHECK (estado IN ('PENDIENTE', 'PAGADA', 'ANULADA')),
+    CHECK (metodo_pago IN ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO') OR metodo_pago IS NULL)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS pagos (

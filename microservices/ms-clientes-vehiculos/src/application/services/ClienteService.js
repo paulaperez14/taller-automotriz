@@ -79,6 +79,10 @@ class ClienteService {
     async obtenerVehiculos(cliente_id) {
         return await ClienteRepository.getVehiculos(cliente_id);
     }
+
+    async buscarPorIdentificacion(identificacion) {
+        return await ClienteRepository.findByIdentificacion(identificacion);
+    }
 }
 
 module.exports = new ClienteService();

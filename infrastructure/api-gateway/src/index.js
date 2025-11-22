@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
 const { authMiddleware } = require('./middleware/auth');
 const routes = require('./routes');
 
@@ -17,23 +16,10 @@ app.use(cors({
     credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-    message: 'Demasiadas peticiones desde esta IP, por favor intente más tarde.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-app.use(limiter);
-
 // Logging
 app.use(morgan('combined'));
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// NO usar body parser aquí, se hará por ruta específica
 
 // Health check
 app.get('/health', (req, res) => {

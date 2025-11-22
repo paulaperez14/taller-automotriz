@@ -84,6 +84,44 @@ class OrdenesController {
         }
     }
 
+    async eliminarServicio(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
+            await OrdenService.eliminarServicio(req.params.id, req.params.servicioId);
+            res.json({ message: 'Servicio eliminado exitosamente' });
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    async actualizarEstadoServicio(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
+            await OrdenService.actualizarEstadoServicio(
+                req.params.id,
+                req.params.servicioId,
+                req.body.estado
+            );
+
+            // Retornar la orden actualizada con todos sus servicios
+            const orden = await OrdenService.obtenerPorId(req.params.id);
+            res.json({
+                message: 'Estado del servicio actualizado exitosamente',
+                data: orden
+            });
+        } catch (error) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
     async agregarRepuesto(req, res) {
         try {
             const errors = validationResult(req);

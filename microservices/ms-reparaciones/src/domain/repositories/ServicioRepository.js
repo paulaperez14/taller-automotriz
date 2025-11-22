@@ -4,16 +4,17 @@ class ServicioRepository {
     async create(servicio) {
         const pool = getPool();
         const [result] = await pool.query(
-            `INSERT INTO servicios (servicio_id, orden_id, tipo, nombre, descripcion, costo, horas_estimadas) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO servicios (servicio_id, orden_id, tipo, nombre, descripcion, costo, estado, horas_estimadas) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 servicio.servicio_id,
                 servicio.orden_id,
-                'REPARACION', // tipo por defecto
-                servicio.descripcion.substring(0, 50), // usar descripción como nombre
-                servicio.descripcion,
-                servicio.costo_mano_obra,
-                (servicio.tiempo_estimado / 60).toFixed(2) // convertir minutos a horas
+                servicio.tipo || 'REPARACION',
+                servicio.nombre || servicio.descripcion?.substring(0, 200) || 'Servicio',
+                servicio.descripcion || '',
+                servicio.costo || 0,
+                servicio.estado || 'PENDIENTE',
+                servicio.horas_estimadas || 1.0
             ]
         );
         return result;

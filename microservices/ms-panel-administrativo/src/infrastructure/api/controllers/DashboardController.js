@@ -60,6 +60,10 @@ class DashboardController {
             const { fecha_inicio, fecha_fin } = req.query;
             const estadisticas = await DashboardService.obtenerEstadisticasIngresos(fecha_inicio, fecha_fin);
 
+            if (!estadisticas) {
+                return res.status(204).end(); // No Content - no hay estadísticas disponibles
+            }
+
             res.json(estadisticas);
         } catch (error) {
             console.error('❌ Error al obtener estadísticas de ingresos:', error.message);

@@ -16,11 +16,15 @@ class DashboardService {
     async obtenerResumen() {
         try {
             // Obtener datos de todos los microservicios en paralelo
-            const [citas, ordenes, facturas, inventario] = await Promise.allSettled([
-                this._obtenerCitasDelDia(),
+            const [citas, citasCompletadas, ordenes, ordenesCompletadas, facturas, inventario, clientes, vehiculos] = await Promise.allSettled([
+                this._obtenerCitasProximas(),
+                this._obtenerCitasCompletadasMes(),
                 this._obtenerOrdenesActivas(),
+                this._obtenerOrdenesCompletadasMes(),
                 this._obtenerFacturasPendientes(),
-                this._obtenerAlertasInventario()
+                this._obtenerAlertasInventario(),
+                this._obtenerTotalClientes(),
+                this._obtenerTotalVehiculos()
             ]);
 
             const resumen = {
@@ -28,12 +32,14 @@ class DashboardService {
                 citas: {
                     total: citas.status === 'fulfilled' ? citas.value.length : 0,
                     pendientes: citas.status === 'fulfilled' ?
-                        citas.value.filter(c => c.estado === 'PROGRAMADA').length : 0
+                        citas.value.filter(c => c.estado === 'PROGRAMADA').length : 0,
+                    completadas_mes: citasCompletadas.status === 'fulfilled' ? citasCompletadas.value : 0
                 },
                 ordenes: {
                     total: ordenes.status === 'fulfilled' ? ordenes.value.length : 0,
                     en_proceso: ordenes.status === 'fulfilled' ?
-                        ordenes.value.filter(o => o.estado === 'EN_PROCESO').length : 0
+                        ordenes.value.filter(o => o.estado === 'EN_PROCESO').length : 0,
+                    completadas_mes: ordenesCompletadas.status === 'fulfilled' ? ordenesCompletadas.value : 0
                 },
                 facturas: {
                     total: facturas.status === 'fulfilled' ? facturas.value.length : 0,
@@ -42,6 +48,12 @@ class DashboardService {
                 },
                 inventario: {
                     alertas: inventario.status === 'fulfilled' ? inventario.value.length : 0
+                },
+                clientes: {
+                    total: clientes.status === 'fulfilled' ? clientes.value : 0
+                },
+                vehiculos: {
+                    total: vehiculos.status === 'fulfilled' ? vehiculos.value : 0
                 }
             };
 
@@ -96,25 +108,36 @@ class DashboardService {
      */
     async obtenerEstadisticasIngresos(fechaInicio, fechaFin) {
         try {
+            const response = await axios.get(`${this.FACTURACION_URL}/api/facturas`, {
+                timeout: 5000
+            });
+
+            const facturas = response.data.data || response.data.facturas || [];
+
+            if (facturas.length === 0) {
+                return null; // No hay facturas, retornar null para que el frontend no muestre la sección
+            }
+
+            const totalFacturado = facturas.reduce((acc, f) => acc + parseFloat(f.total || 0), 0);
+            const facturasCompletas = facturas.filter(f => f.estado === 'PAGADA' || f.estado === 'COMPLETADA');
+            const totalCobrado = facturasCompletas.reduce((acc, f) => acc + parseFloat(f.total || 0), 0);
+            const pendienteCobro = totalFacturado - totalCobrado;
+            const ticketPromedio = facturas.length > 0 ? totalFacturado / facturas.length : 0;
+
             return {
                 periodo: {
                     inicio: fechaInicio || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     fin: fechaFin || new Date().toISOString().split('T')[0]
                 },
-                total_facturado: 15750000,
-                total_cobrado: 12500000,
-                pendiente_cobro: 3250000,
-                numero_facturas: 38,
-                ticket_promedio: 414473.68,
-                metodos_pago: {
-                    EFECTIVO: 5200000,
-                    TARJETA_CREDITO: 4800000,
-                    TARJETA_DEBITO: 2500000
-                }
+                total_facturado: totalFacturado,
+                total_cobrado: totalCobrado,
+                pendiente_cobro: pendienteCobro,
+                numero_facturas: facturas.length,
+                ticket_promedio: ticketPromedio
             };
         } catch (error) {
             console.error('Error al obtener estadísticas de ingresos:', error.message);
-            throw error;
+            return null; // Retornar null si hay error
         }
     }
 
@@ -148,7 +171,8 @@ class DashboardService {
                 timeout: 5000
             });
 
-            return response.data.citas.filter(c =>
+            const citas = response.data.data || response.data.citas || [];
+            return citas.filter(c =>
                 c.estado === 'PROGRAMADA' || c.estado === 'CONFIRMADA'
             );
         } catch (error) {
@@ -166,7 +190,8 @@ class DashboardService {
                 timeout: 5000
             });
 
-            return response.data.ordenes.filter(o =>
+            const ordenes = response.data.data || response.data.ordenes || [];
+            return ordenes.filter(o =>
                 o.estado === 'PENDIENTE' || o.estado === 'EN_PROCESO'
             );
         } catch (error) {
@@ -180,11 +205,12 @@ class DashboardService {
      */
     async obtenerFacturasPendientes() {
         try {
-            const response = await axios.get(`${this.FACTURACION_URL}/api/facturas/filtros/pendientes`, {
+            const response = await axios.get(`${this.FACTURACION_URL}/api/facturas`, {
                 timeout: 5000
             });
 
-            return response.data.facturas || [];
+            const facturas = response.data.data || response.data.facturas || [];
+            return facturas.filter(f => f.estado === 'PENDIENTE' || f.estado === 'EMITIDA');
         } catch (error) {
             console.warn('No se pudieron obtener facturas:', error.message);
             return [];
@@ -198,28 +224,139 @@ class DashboardService {
             const response = await axios.get(`${this.AGENDAMIENTO_URL}/api/citas?fecha=${hoy}`, {
                 timeout: 5000
             });
-            return response.data.citas || [];
+            return response.data.data || response.data.citas || [];
         } catch (error) {
             return [];
         }
     }
 
+    async _obtenerCitasProximas() {
+        try {
+            const response = await axios.get(`${this.AGENDAMIENTO_URL}/api/citas?limit=100`, {
+                timeout: 5000
+            });
+            const todasCitas = response.data.data || response.data.citas || [];
+            const ahora = new Date();
+
+            // Filtrar solo citas programadas o confirmadas y que sean futuras
+            return todasCitas.filter(cita => {
+                if (cita.estado !== 'PROGRAMADA' && cita.estado !== 'CONFIRMADA') return false;
+
+                // Extraer solo la fecha (YYYY-MM-DD) de la fecha ISO
+                const soloFecha = cita.fecha.split('T')[0];
+                const fechaCita = new Date(soloFecha + 'T' + cita.hora);
+                return fechaCita >= ahora;
+            });
+        } catch (error) {
+            console.error('Error obteniendo citas próximas:', error.message);
+            return [];
+        }
+    }
+
     async _obtenerOrdenesActivas() {
-        return await this.obtenerOrdenesActivas();
+        try {
+            const response = await axios.get(`${this.REPARACIONES_URL}/api/ordenes`, {
+                timeout: 5000
+            });
+            const ordenes = response.data.data || response.data.ordenes || [];
+            return ordenes.filter(o =>
+                o.estado === 'PENDIENTE' || o.estado === 'EN_PROCESO'
+            );
+        } catch (error) {
+            console.warn('No se pudieron obtener órdenes:', error.message);
+            return [];
+        }
     }
 
     async _obtenerFacturasPendientes() {
-        return await this.obtenerFacturasPendientes();
+        try {
+            const response = await axios.get(`${this.FACTURACION_URL}/api/facturas`, {
+                timeout: 5000
+            });
+            const facturas = response.data.data || response.data.facturas || [];
+            return facturas.filter(f => f.estado === 'PENDIENTE' || f.estado === 'EMITIDA');
+        } catch (error) {
+            return [];
+        }
     }
 
     async _obtenerAlertasInventario() {
         try {
-            const response = await axios.get(`${this.REPUESTOS_URL}/api/repuestos/alertas/bajo-stock`, {
+            const response = await axios.get(`${this.REPUESTOS_URL}/api/repuestos`, {
                 timeout: 5000
             });
-            return response.data.repuestos || [];
+            const repuestos = response.data.data || response.data.repuestos || [];
+            // Filtrar repuestos con stock bajo (ejemplo: menos de 10 unidades)
+            return repuestos.filter(r => parseInt(r.stock_actual || 0) < parseInt(r.stock_minimo || 10));
         } catch (error) {
             return [];
+        }
+    }
+
+    async _obtenerCitasCompletadasMes() {
+        try {
+            const response = await axios.get(`${this.AGENDAMIENTO_URL}/api/citas?limit=500`, {
+                timeout: 5000
+            });
+            const todasCitas = response.data.data || response.data.citas || [];
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+
+            return todasCitas.filter(cita => {
+                if (cita.estado !== 'COMPLETADA') return false;
+                const fechaCita = new Date(cita.fecha);
+                return fechaCita >= inicioMes;
+            }).length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    async _obtenerOrdenesCompletadasMes() {
+        try {
+            const response = await axios.get(`${this.REPARACIONES_URL}/api/ordenes?limit=500`, {
+                timeout: 5000
+            });
+            const todasOrdenes = response.data.data || response.data.ordenes || [];
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+
+            return todasOrdenes.filter(orden => {
+                // Contar tanto FINALIZADO como ENTREGADO como completadas
+                if (orden.estado !== 'FINALIZADO' && orden.estado !== 'ENTREGADO') return false;
+                const fechaCreacion = new Date(orden.fecha_creacion);
+                return fechaCreacion >= inicioMes;
+            }).length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    async _obtenerTotalClientes() {
+        try {
+            const CLIENTES_URL = process.env.CLIENTES_URL || 'http://ms-clientes-vehiculos:3005';
+            const response = await axios.get(`${CLIENTES_URL}/api/clientes?limit=10000`, {
+                timeout: 5000
+            });
+            const clientes = response.data.data || [];
+            return clientes.length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    async _obtenerTotalVehiculos() {
+        try {
+            const CLIENTES_URL = process.env.CLIENTES_URL || 'http://ms-clientes-vehiculos:3005';
+            const response = await axios.get(`${CLIENTES_URL}/api/vehiculos?limit=10000`, {
+                timeout: 5000
+            });
+            const vehiculos = response.data.data || [];
+            return vehiculos.length;
+        } catch (error) {
+            return 0;
         }
     }
 }

@@ -33,7 +33,13 @@ const createProxy = (target, pathRewrite = {}) => {
 // ===========================================
 
 // Autenticación
-router.use('/auth', createProxy(process.env.AUTH_SERVICE_URL, { '^/api/auth': '/api' }));
+router.use('/auth', createProxy(process.env.AUTH_SERVICE_URL, { '^/api/auth': '/api/auth' }));
+
+// Rutas públicas para agendamiento de reservas (clientes sin autenticar)
+router.use('/clientes-publico', createProxy(process.env.CLIENTES_SERVICE_URL, { '^/api/clientes-publico': '/api/clientes' }));
+router.use('/vehiculos-publico', createProxy(process.env.CLIENTES_SERVICE_URL, { '^/api/vehiculos-publico': '/api/vehiculos' }));
+router.use('/citas-publico', createProxy(process.env.AGENDAMIENTO_SERVICE_URL, { '^/api/citas-publico': '/api/citas' }));
+router.use('/servicios-publico', createProxy(process.env.PANEL_SERVICE_URL, { '^/api/servicios-publico': '/api/servicios' }));
 
 // ===========================================
 // RUTAS PROTEGIDAS (requieren autenticación)
@@ -43,7 +49,7 @@ router.use('/auth', createProxy(process.env.AUTH_SERVICE_URL, { '^/api/auth': '/
 router.use('/clientes', authMiddleware, createProxy(process.env.CLIENTES_SERVICE_URL, { '^/api/clientes': '/api/clientes' }));
 router.use('/vehiculos', authMiddleware, createProxy(process.env.CLIENTES_SERVICE_URL, { '^/api/vehiculos': '/api/vehiculos' }));
 
-// Agendamiento (Citas)
+// Agendamiento (Citas)  
 router.use('/citas', authMiddleware, createProxy(process.env.AGENDAMIENTO_SERVICE_URL, { '^/api/citas': '/api/citas' }));
 
 // Reparaciones (Órdenes de Servicio)
@@ -60,5 +66,8 @@ router.use('/pagos', authMiddleware, createProxy(process.env.FACTURACION_SERVICE
 // Panel Administrativo (Dashboard y Reportes)
 router.use('/dashboard', authMiddleware, createProxy(process.env.PANEL_SERVICE_URL, { '^/api/dashboard': '/api/dashboard' }));
 router.use('/reportes', authMiddleware, createProxy(process.env.PANEL_SERVICE_URL, { '^/api/reportes': '/api/reportes' }));
+
+// Catálogo de Servicios
+router.use('/servicios', authMiddleware, createProxy(process.env.PANEL_SERVICE_URL, { '^/api/servicios': '/api/servicios' }));
 
 module.exports = router;

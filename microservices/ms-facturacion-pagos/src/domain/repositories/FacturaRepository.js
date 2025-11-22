@@ -184,6 +184,24 @@ class FacturaRepository {
             connection.release();
         }
     }
+
+    /**
+     * Buscar factura por orden de servicio
+     */
+    async findByOrdenServicio(ordenServicioId) {
+        const connection = await getConnection();
+
+        try {
+            const [rows] = await connection.execute(
+                `SELECT * FROM facturas_pagos WHERE orden_servicio_id = ? LIMIT 1`,
+                [ordenServicioId]
+            );
+
+            return rows[0] || null;
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = new FacturaRepository();

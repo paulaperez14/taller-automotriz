@@ -58,6 +58,25 @@ router.post('/:id/servicios',
     OrdenesController.agregarServicio
 );
 
+// Eliminar servicio de orden
+router.delete('/:id/servicios/:servicioId',
+    [
+        param('id').isUUID(),
+        param('servicioId').isUUID()
+    ],
+    OrdenesController.eliminarServicio
+);
+
+// Actualizar estado de un servicio
+router.patch('/:id/servicios/:servicioId/estado',
+    [
+        param('id').isUUID(),
+        param('servicioId').isUUID(),
+        body('estado').isIn(['PENDIENTE', 'EN_PROCESO', 'COMPLETADO'])
+    ],
+    OrdenesController.actualizarEstadoServicio
+);
+
 // Agregar repuesto a un servicio
 router.post('/:ordenId/servicios/:servicioId/repuestos',
     [

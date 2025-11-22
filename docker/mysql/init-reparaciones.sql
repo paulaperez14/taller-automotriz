@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS mecanicos (
 
 CREATE TABLE IF NOT EXISTS ordenes_servicio (
     orden_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    cita_id CHAR(36) NULL COMMENT 'Referencia externa a ms-agendamiento',
     cliente_id CHAR(36) NOT NULL COMMENT 'Referencia externa a ms-clientes-vehiculos',
     vehiculo_id CHAR(36) NOT NULL COMMENT 'Referencia externa a ms-clientes-vehiculos',
     mecanico_id CHAR(36) NULL,
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS ordenes_servicio (
     
     FOREIGN KEY (mecanico_id) REFERENCES mecanicos(mecanico_id) ON DELETE SET NULL,
     
+    INDEX idx_cita (cita_id),
     INDEX idx_cliente (cliente_id),
     INDEX idx_vehiculo (vehiculo_id),
     INDEX idx_estado (estado),
@@ -150,48 +152,8 @@ CREATE TABLE IF NOT EXISTS eventos_dominio (
 -- DATOS DE PRUEBA (Seed Data)
 -- ========================================
 
--- Mecánicos de prueba
-INSERT INTO mecanicos (mecanico_id, nombres, apellidos, especialidad, disponible) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 'Carlos', 'Martínez', 'MECANICA_GENERAL', TRUE),
-('550e8400-e29b-41d4-a716-446655440002', 'Ana', 'López', 'ELECTRICIDAD', TRUE),
-('550e8400-e29b-41d4-a716-446655440003', 'José', 'Rodríguez', 'TRANSMISION', TRUE),
-('550e8400-e29b-41d4-a716-446655440004', 'María', 'González', 'MOTOR', TRUE),
-('550e8400-e29b-41d4-a716-446655440005', 'Luis', 'Hernández', 'FRENOS', TRUE);
-
--- Orden de servicio de prueba
-INSERT INTO ordenes_servicio (
-    orden_id, 
-    cliente_id, 
-    vehiculo_id, 
-    mecanico_id, 
-    fecha_creacion, 
-    fecha_estimada_finalizacion,
-    estado, 
-    costo_total,
-    diagnostico,
-    gravedad_diagnostico,
-    recomendaciones,
-    fecha_diagnostico
-) VALUES (
-    '660e8400-e29b-41d4-a716-446655440001',
-    '770e8400-e29b-41d4-a716-446655440001', -- Cliente externo
-    '880e8400-e29b-41d4-a716-446655440001', -- Vehículo externo
-    '550e8400-e29b-41d4-a716-446655440001', -- Carlos Martínez
-    CURDATE(),
-    DATE_ADD(CURDATE(), INTERVAL 3 DAY),
-    'EN_PROCESO',
-    250000.00,
-    'Revisión general del motor. Se detectó fuga de aceite en el cárter y desgaste en pastillas de freno.',
-    'MEDIA',
-    'Cambio de empaque de cárter, cambio de aceite y filtro. Reemplazo de pastillas de freno delanteras.',
-    CURDATE()
-);
-
--- Servicios para la orden de prueba
-INSERT INTO servicios (servicio_id, orden_id, tipo, nombre, descripcion, costo, estado, horas_estimadas) VALUES
-('990e8400-e29b-41d4-a716-446655440001', '660e8400-e29b-41d4-a716-446655440001', 'MANTENIMIENTO_PREVENTIVO', 'Cambio de aceite y filtro', 'Cambio de aceite 10W-40 y filtro de aceite', 80000.00, 'COMPLETADO', 1.0),
-('990e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440001', 'REPARACION', 'Cambio de empaque de cárter', 'Reemplazo de empaque por fuga de aceite', 120000.00, 'EN_PROCESO', 2.5),
-('990e8400-e29b-41d4-a716-446655440003', '660e8400-e29b-41d4-a716-446655440001', 'REPARACION', 'Cambio de pastillas de freno', 'Reemplazo de pastillas delanteras', 50000.00, 'PENDIENTE', 1.5);
+-- Datos de prueba
+-- Sin datos de prueba de mecánicos, órdenes ni servicios
 
 -- ========================================
 -- TRIGGERS Y PROCEDIMIENTOS ALMACENADOS

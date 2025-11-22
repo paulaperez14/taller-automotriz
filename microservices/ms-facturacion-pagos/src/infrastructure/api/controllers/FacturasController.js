@@ -9,8 +9,8 @@ class FacturasController {
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const { orden_servicio_id, cliente_id, items } = req.body;
-            const factura = await FacturaService.crear(orden_servicio_id, cliente_id, items);
+            const { orden_servicio_id, cliente_id, items, metodo_pago, notas } = req.body;
+            const factura = await FacturaService.crear(orden_servicio_id, cliente_id, items, metodo_pago, notas);
 
             res.status(201).json({
                 mensaje: 'Factura creada exitosamente',
@@ -41,7 +41,11 @@ class FacturasController {
                 filtros
             );
 
-            res.json(resultado);
+            // Formatear respuesta para compatibilidad con frontend
+            res.json({
+                data: resultado.facturas,
+                paginacion: resultado.paginacion
+            });
         } catch (error) {
             console.error('❌ Error al listar facturas:', error.message);
             res.status(500).json({
@@ -65,7 +69,7 @@ class FacturasController {
                 return res.status(404).json({ error: 'Factura no encontrada' });
             }
 
-            res.json(factura);
+            res.json({ data: factura });
         } catch (error) {
             console.error('❌ Error al obtener factura:', error.message);
             res.status(500).json({
