@@ -10,7 +10,9 @@ const config = {
     database: process.env.DB_NAME || 'db_agendamiento',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    timezone: '+00:00',
+    dateStrings: true
 };
 
 async function initializePool() {

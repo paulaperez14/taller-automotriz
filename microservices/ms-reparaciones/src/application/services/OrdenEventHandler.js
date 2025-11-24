@@ -30,9 +30,14 @@ class OrdenEventHandler {
                 return ordenExiste;
             }
 
+            // Generar número de orden secuencial
+            const todasOrdenes = await OrdenRepository.findAll(0, 10000, {});
+            const numeroOrden = todasOrdenes.length + 1;
+
             // Crear la orden de servicio
             const orden = {
                 orden_id: uuidv4(),
+                numero_orden: numeroOrden,
                 cita_id,
                 cliente_id,
                 vehiculo_id,

@@ -102,6 +102,18 @@ class CitaService {
 
         await CitaRepository.create(cita);
 
+        // Crear credenciales para el cliente si no las tiene
+        let credencialesCreadas = null;
+        try {
+            credencialesCreadas = await this.crearCredencialesCliente(cita.cliente_id);
+            if (credencialesCreadas) {
+                console.log(`✅ Credenciales creadas automáticamente para nueva cita`);
+            }
+        } catch (error) {
+            console.error('Error creando credenciales al agendar cita:', error.message);
+            // No interrumpir el proceso de creación de cita si falla la creación de credenciales
+        }
+
         // Publicar evento
         await publishEvent('appointments_events', 'appointment.created', {
             cita_id: cita.cita_id,
@@ -110,10 +122,14 @@ class CitaService {
             fecha: cita.fecha,
             hora: cita.hora,
             estado: cita.estado,
+            credenciales_creadas: credencialesCreadas !== null,
             timestamp: new Date().toISOString()
         });
 
-        return cita;
+        return {
+            ...cita,
+            credenciales: credencialesCreadas
+        };
     }
 
     async listar(page = 1, limit = 10, filtros = {}) {
@@ -327,15 +343,15 @@ class CitaService {
             }
 
             // Generar username y password basados en los datos del cliente
-            const primerNombre = cliente.nombres.toLowerCase().split(' ')[0];
-            const ultimos4 = cliente.identificacion.slice(-4);
-            const username = `${primerNombre}${ultimos4}`;
-            const password = `${ultimos4}${cliente.nombres.charAt(0).toLowerCase()}${cliente.apellidos.charAt(0).toLowerCase()}`;
-            const email = cliente.email || `${username}@taller.com`;
+            // Usuario: email del cliente
+            // Contraseña: identificación completa
+            const username = cliente.email;
+            const password = cliente.identificacion;
+            const email = cliente.email;
 
             // Intentar crear el usuario en el servicio de autenticación
             try {
-                await axios.post(`${AUTH_SERVICE_URL}/api/register`, {
+                await axios.post(`${AUTH_SERVICE_URL}/api/auth/register`, {
                     username,
                     password,
                     email,
@@ -343,9 +359,8 @@ class CitaService {
                 });
 
                 console.log(`✅ Credenciales creadas para cliente ${cliente.nombres} ${cliente.apellidos}:`);
-                console.log(`   Usuario: ${username}`);
-                console.log(`   Contraseña: ${password}`);
-                console.log(`   Email: ${email}`);
+                console.log(`   Usuario (Email): ${username}`);
+                console.log(`   Contraseña (Identificación): ${password}`);
 
                 // Publicar evento para notificar al cliente (puede usarse para enviar email/SMS)
                 await publishEvent('appointments_events', 'client.credentials.created', {

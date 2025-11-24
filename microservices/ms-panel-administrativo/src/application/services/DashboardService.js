@@ -16,11 +16,14 @@ class DashboardService {
     async obtenerResumen() {
         try {
             // Obtener datos de todos los microservicios en paralelo
-            const [citas, citasCompletadas, ordenes, ordenesCompletadas, facturas, inventario, clientes, vehiculos] = await Promise.allSettled([
+            const [citas, citasCompletadas, citasMes, citasCanceladas, ordenes, ordenesCompletadas, ordenesMes, facturas, inventario, clientes, vehiculos] = await Promise.allSettled([
                 this._obtenerCitasProximas(),
                 this._obtenerCitasCompletadasMes(),
+                this._obtenerTotalCitasMes(),
+                this._obtenerCitasCanceladasMes(),
                 this._obtenerOrdenesActivas(),
                 this._obtenerOrdenesCompletadasMes(),
+                this._obtenerTotalOrdenesMes(),
                 this._obtenerFacturasPendientes(),
                 this._obtenerAlertasInventario(),
                 this._obtenerTotalClientes(),
@@ -33,13 +36,16 @@ class DashboardService {
                     total: citas.status === 'fulfilled' ? citas.value.length : 0,
                     pendientes: citas.status === 'fulfilled' ?
                         citas.value.filter(c => c.estado === 'PROGRAMADA').length : 0,
-                    completadas_mes: citasCompletadas.status === 'fulfilled' ? citasCompletadas.value : 0
+                    completadas_mes: citasCompletadas.status === 'fulfilled' ? citasCompletadas.value : 0,
+                    canceladas_mes: citasCanceladas.status === 'fulfilled' ? citasCanceladas.value : 0,
+                    total_mes: citasMes.status === 'fulfilled' ? citasMes.value : 0
                 },
                 ordenes: {
                     total: ordenes.status === 'fulfilled' ? ordenes.value.length : 0,
                     en_proceso: ordenes.status === 'fulfilled' ?
                         ordenes.value.filter(o => o.estado === 'EN_PROCESO').length : 0,
-                    completadas_mes: ordenesCompletadas.status === 'fulfilled' ? ordenesCompletadas.value : 0
+                    completadas_mes: ordenesCompletadas.status === 'fulfilled' ? ordenesCompletadas.value : 0,
+                    total_mes: ordenesMes.status === 'fulfilled' ? ordenesMes.value : 0
                 },
                 facturas: {
                     total: facturas.status === 'fulfilled' ? facturas.value.length : 0,
@@ -313,6 +319,45 @@ class DashboardService {
         }
     }
 
+    async _obtenerCitasCanceladasMes() {
+        try {
+            const response = await axios.get(`${this.AGENDAMIENTO_URL}/api/citas?limit=500`, {
+                timeout: 5000
+            });
+            const todasCitas = response.data.data || response.data.citas || [];
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+
+            return todasCitas.filter(cita => {
+                if (cita.estado !== 'CANCELADA') return false;
+                const fechaCita = new Date(cita.fecha);
+                return fechaCita >= inicioMes;
+            }).length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    async _obtenerTotalCitasMes() {
+        try {
+            const response = await axios.get(`${this.AGENDAMIENTO_URL}/api/citas?limit=500`, {
+                timeout: 5000
+            });
+            const todasCitas = response.data.data || response.data.citas || [];
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+
+            return todasCitas.filter(cita => {
+                const fechaCita = new Date(cita.fecha);
+                return fechaCita >= inicioMes;
+            }).length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
     async _obtenerOrdenesCompletadasMes() {
         try {
             const response = await axios.get(`${this.REPARACIONES_URL}/api/ordenes?limit=500`, {
@@ -326,6 +371,25 @@ class DashboardService {
             return todasOrdenes.filter(orden => {
                 // Contar tanto FINALIZADO como ENTREGADO como completadas
                 if (orden.estado !== 'FINALIZADO' && orden.estado !== 'ENTREGADO') return false;
+                const fechaCreacion = new Date(orden.fecha_creacion);
+                return fechaCreacion >= inicioMes;
+            }).length;
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    async _obtenerTotalOrdenesMes() {
+        try {
+            const response = await axios.get(`${this.REPARACIONES_URL}/api/ordenes?limit=500`, {
+                timeout: 5000
+            });
+            const todasOrdenes = response.data.data || response.data.ordenes || [];
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            inicioMes.setHours(0, 0, 0, 0);
+
+            return todasOrdenes.filter(orden => {
                 const fechaCreacion = new Date(orden.fecha_creacion);
                 return fechaCreacion >= inicioMes;
             }).length;

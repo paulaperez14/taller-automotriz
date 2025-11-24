@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS mecanicos (
 
 CREATE TABLE IF NOT EXISTS ordenes_servicio (
     orden_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    numero_orden VARCHAR(20) UNIQUE NOT NULL COMMENT 'Código alfanumérico único de la orden',
     cita_id CHAR(36) NULL COMMENT 'Referencia externa a ms-agendamiento',
     cliente_id CHAR(36) NOT NULL COMMENT 'Referencia externa a ms-clientes-vehiculos',
     vehiculo_id CHAR(36) NOT NULL COMMENT 'Referencia externa a ms-clientes-vehiculos',
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS ordenes_servicio (
     
     FOREIGN KEY (mecanico_id) REFERENCES mecanicos(mecanico_id) ON DELETE SET NULL,
     
+    INDEX idx_numero_orden (numero_orden),
     INDEX idx_cita (cita_id),
     INDEX idx_cliente (cliente_id),
     INDEX idx_vehiculo (vehiculo_id),

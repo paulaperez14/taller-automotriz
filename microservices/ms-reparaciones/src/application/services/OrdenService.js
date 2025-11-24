@@ -5,23 +5,28 @@ const ServicioRepository = require('../../domain/repositories/ServicioRepository
 const { publishEvent } = require('../../infrastructure/messaging/rabbitmq');
 
 const CLIENTES_SERVICE_URL = process.env.CLIENTES_SERVICE_URL || 'http://ms-clientes-vehiculos:3005';
+const AGENDAMIENTO_SERVICE_URL = process.env.AGENDAMIENTO_SERVICE_URL || 'http://ms-agendamiento:3002';
 
 class OrdenService {
     async enriquecerOrdenesConDatos(ordenes) {
         const clienteIds = [...new Set(ordenes.map(o => o.cliente_id).filter(Boolean))];
         const vehiculoIds = [...new Set(ordenes.map(o => o.vehiculo_id).filter(Boolean))];
+        const citaIds = [...new Set(ordenes.map(o => o.cita_id).filter(Boolean))];
 
-        const [clientesData, vehiculosData] = await Promise.all([
+        const [clientesData, vehiculosData, citasData] = await Promise.all([
             this.obtenerClientes(clienteIds),
-            this.obtenerVehiculos(vehiculoIds)
+            this.obtenerVehiculos(vehiculoIds),
+            this.obtenerCitas(citaIds)
         ]);
 
         const clientesMap = new Map(clientesData.map(c => [c.cliente_id, c]));
         const vehiculosMap = new Map(vehiculosData.map(v => [v.vehiculo_id, v]));
+        const citasMap = new Map(citasData.map(c => [c.cita_id, c]));
 
         return ordenes.map(orden => {
             const cliente = clientesMap.get(orden.cliente_id);
             const vehiculo = vehiculosMap.get(orden.vehiculo_id);
+            const cita = citasMap.get(orden.cita_id);
 
             return {
                 ...orden,
@@ -30,7 +35,9 @@ class OrdenService {
                 cliente_telefono: cliente?.telefono,
                 vehiculo_placa: vehiculo?.placa,
                 vehiculo_marca: vehiculo?.marca,
-                vehiculo_modelo: vehiculo?.modelo
+                vehiculo_modelo: vehiculo?.modelo,
+                cita_fecha: cita?.fecha,
+                cita_hora: cita?.hora
             };
         });
     }
@@ -62,9 +69,50 @@ class OrdenService {
             return [];
         }
     }
+
+    async obtenerCitas(citaIds) {
+        if (citaIds.length === 0) return [];
+        try {
+            const requests = citaIds.map(id =>
+                axios.get(`${AGENDAMIENTO_SERVICE_URL}/api/citas/${id}`).catch(() => null)
+            );
+            const responses = await Promise.all(requests);
+            return responses.filter(r => r && r.data).map(r => r.data.data || r.data);
+        } catch (error) {
+            console.error('Error obteniendo citas:', error.message);
+            return [];
+        }
+    }
     async crear(data) {
+        // Generar número de orden alfanumérico: 7 caracteres aleatorios + últimos 3 dígitos de identificación
+        const generarNumeroOrden = (clienteId) => {
+            const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin caracteres confusos (I,O,0,1)
+            let codigo = '';
+            for (let i = 0; i < 7; i++) {
+                codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            // Obtener últimos 3 dígitos de la identificación del cliente
+            return codigo; // Será completado después de obtener datos del cliente
+        };
+
+        // Obtener datos del cliente para extraer su identificación
+        let ultimos3Digitos = '000';
+        try {
+            const clientesData = await this.obtenerClientes([data.cliente_id]);
+            if (clientesData.length > 0 && clientesData[0].identificacion) {
+                const identificacion = clientesData[0].identificacion.toString();
+                ultimos3Digitos = identificacion.slice(-3).padStart(3, '0');
+            }
+        } catch (error) {
+            console.warn('No se pudo obtener identificación del cliente, usando 000');
+        }
+
+        const codigoBase = generarNumeroOrden();
+        const numero_orden = codigoBase + ultimos3Digitos;
+
         const orden = {
             orden_id: uuidv4(),
+            numero_orden: numero_orden,
             cliente_id: data.cliente_id,
             vehiculo_id: data.vehiculo_id,
             mecanico_id: data.mecanico_id,

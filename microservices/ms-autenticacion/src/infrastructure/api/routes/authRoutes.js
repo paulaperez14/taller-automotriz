@@ -8,9 +8,9 @@ const router = express.Router();
 router.post('/register',
     [
         body('username').notEmpty().trim(),
-        body('password').isLength({ min: 6 }),
+        body('password').isLength({ min: 1 }),
         body('email').isEmail(),
-        body('rol').isIn(['ADMINISTRADOR', 'MECANICO', 'RECEPCIONISTA'])
+        body('rol').isIn(['ADMINISTRADOR', 'MECANICO', 'RECEPCIONISTA', 'CLIENTE'])
     ],
     AuthController.register
 );

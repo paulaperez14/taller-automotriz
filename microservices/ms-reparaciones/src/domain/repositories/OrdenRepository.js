@@ -4,11 +4,12 @@ class OrdenRepository {
     async create(orden) {
         const pool = getPool();
         const [result] = await pool.query(
-            `INSERT INTO ordenes_servicio (orden_id, cita_id, cliente_id, vehiculo_id, 
+            `INSERT INTO ordenes_servicio (orden_id, numero_orden, cita_id, cliente_id, vehiculo_id, 
        mecanico_id, diagnostico, estado, fecha_creacion, fecha_estimada_finalizacion) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 orden.orden_id,
+                orden.numero_orden,
                 orden.cita_id || null,
                 orden.cliente_id,
                 orden.vehiculo_id,
