@@ -39,6 +39,10 @@ postgres-data/
 tmp/
 temp/
 *.tmp
+temp_*.json
+*_temp.json
+crear_usuarios*.js
+update_*.sql
 
 # Coverage
 coverage/
@@ -47,6 +51,3 @@ coverage/
 # Logs
 logs/
 *.log
-
-# Frontend (temporal - no subir hasta estar estable)
-frontend/
