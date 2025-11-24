@@ -8,7 +8,7 @@ Se ha modificado el sistema de autenticación para que los **clientes** utilicen
 
 ## 🔐 Credenciales de Acceso
 
-### Administradores y Personal
+### Personal del Taller
 
 | Rol | Usuario | Contraseña |
 |-----|---------|-----------|
@@ -17,20 +17,24 @@ Se ha modificado el sistema de autenticación para que los **clientes** utilicen
 
 ### Clientes
 
-| Nombre | Usuario (Email) | Contraseña (Identificación) |
-|--------|-----------------|----------------------------|
-| Paula Pérez | `paula.perezp@cecar.edu.co` | `1193216997` |
-| Eliasib Benitez | `eliasib.benitez@cecar.edu.co` | `1104008652` |
-| test test | `setst@gmail.com` | `555` |
-| Juan Bernal | `juan.bernanl@gmail.com` | `55555` |
+Los clientes **NO** están hardcodeados. Sus credenciales se crean automáticamente cuando:
+1. El cliente agenda su primera cita
+2. El sistema registra al cliente en `db_clientes_vehiculos`
+3. Se generan automáticamente sus credenciales de acceso:
+   - **Usuario**: Su email registrado
+   - **Contraseña**: Su número de identificación
+
+Ejemplo: Si un cliente con email `juan@ejemplo.com` e identificación `123456789` agenda una cita, podrá iniciar sesión con:
+- Usuario: `juan@ejemplo.com`
+- Contraseña: `123456789`
 
 ## 📝 Notas Importantes
 
-1. **Nuevos clientes**: Al registrar un nuevo cliente en el sistema:
-   - Se debe crear su usuario en la tabla `usuarios` de `db_autenticacion`
-   - El `usuario_id` debe coincidir con el `cliente_id` de `db_clientes_vehiculos`
-   - El username debe ser su email
-   - La contraseña debe ser el hash bcrypt de su identificación
+1. **Nuevos clientes**: Al agendar una cita, el sistema automáticamente:
+   - Crea el usuario en la tabla `usuarios` de `db_autenticacion`
+   - Asigna el email como username
+   - Genera la contraseña usando la identificación del cliente
+   - El `usuario_id` coincide con el `cliente_id` de `db_clientes_vehiculos`
 
 2. **Generación de hash bcrypt**: 
    ```javascript
