@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { clienteService, vehiculoService } from '../services';
+import { getMarcasPorTipo, getModelosPorMarca } from '../data/vehiculosData';
 import './AgendarCita.css';
 
 const AgendarCita = () => {
@@ -13,6 +14,9 @@ const AgendarCita = () => {
     const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
     const [clienteAutenticado, setClienteAutenticado] = useState(null);
     const [vehiculosCliente, setVehiculosCliente] = useState([]);
+    const [marcasDisponibles, setMarcasDisponibles] = useState([]);
+    const [modelosDisponibles, setModelosDisponibles] = useState([]);
+    const [vehiculoSeleccionadoId, setVehiculoSeleccionadoId] = useState(null);
 
     // Datos del cliente
     const [datosCliente, setDatosCliente] = useState({
@@ -67,6 +71,8 @@ const AgendarCita = () => {
     // Cargar servicios disponibles del catálogo
     useEffect(() => {
         cargarServiciosDisponibles();
+        // Inicializar marcas disponibles según tipo de vehículo por defecto (AUTOMOVIL)
+        setMarcasDisponibles(getMarcasPorTipo('AUTOMOVIL'));
     }, []);
 
     const cargarDatosCliente = async () => {
@@ -104,21 +110,20 @@ const AgendarCita = () => {
                 const vehiculos = todosVehiculos.filter(v => v.cliente_id === cliente.cliente_id);
                 console.log('Vehículos del cliente:', vehiculos);
                 setVehiculosCliente(vehiculos);
-
-                // Si tiene vehículos, pre-seleccionar el primero
-                if (vehiculos.length > 0) {
-                    const vehiculo = vehiculos[0];
-                    setDatosVehiculo({
-                        placa: vehiculo.placa || '',
-                        marca: vehiculo.marca || '',
-                        modelo: vehiculo.modelo || '',
-                        anio: vehiculo.anio || '',
-                        color: vehiculo.color || '',
-                        tipo_vehiculo: vehiculo.tipo_vehiculo || 'AUTOMOVIL',
-                        numero_motor: vehiculo.numero_motor || '',
-                        numero_chasis: vehiculo.numero_chasis || ''
-                    });
-                }
+                // Inicializar campos vacíos y marcas por defecto
+                setVehiculoSeleccionadoId(null);
+                setDatosVehiculo({
+                    placa: '',
+                    marca: '',
+                    modelo: '',
+                    anio: '',
+                    color: '',
+                    tipo_vehiculo: 'AUTOMOVIL',
+                    numero_motor: '',
+                    numero_chasis: ''
+                });
+                setMarcasDisponibles(getMarcasPorTipo('AUTOMOVIL'));
+                setModelosDisponibles([]);
             } catch (vehiculosError) {
                 console.error('Error cargando vehículos:', vehiculosError);
                 setVehiculosCliente([]);
@@ -252,7 +257,29 @@ const AgendarCita = () => {
     };
 
     const handleVehiculoChange = (e) => {
-        setDatosVehiculo({ ...datosVehiculo, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        if (name === 'tipo_vehiculo') {
+            // Cuando cambia el tipo de vehículo, actualizar marcas disponibles y resetear marca/modelo
+            setMarcasDisponibles(getMarcasPorTipo(value));
+            setModelosDisponibles([]);
+            setDatosVehiculo({
+                ...datosVehiculo,
+                tipo_vehiculo: value,
+                marca: '',
+                modelo: ''
+            });
+        } else if (name === 'marca') {
+            // Cuando cambia la marca, actualizar modelos disponibles y resetear modelo
+            setModelosDisponibles(getModelosPorMarca(value));
+            setDatosVehiculo({
+                ...datosVehiculo,
+                marca: value,
+                modelo: ''
+            });
+        } else {
+            setDatosVehiculo({ ...datosVehiculo, [name]: value });
+        }
     };
 
     const handleCitaChange = (e) => {
@@ -391,6 +418,7 @@ const AgendarCita = () => {
             // Mostrar información de la reserva confirmada
             setSuccess({
                 mensaje: '¡Reserva agendada exitosamente!',
+                esClienteNuevo: !!nuevoClienteId,
                 detalles: {
                     cliente: `${datosCliente.nombres} ${datosCliente.apellidos}`,
                     identificacion: datosCliente.identificacion,
@@ -481,6 +509,15 @@ const AgendarCita = () => {
         return (
             <div className="agendar-cita-container">
                 <div className="confirmacion-card">
+                    <div className="confirmacion-header">
+                        <a href="http://localhost:3009" className="logo-link">
+                            <div className="logo-container">
+                                <span className="logo-icon">🚗</span>
+                                <span className="logo-text">Taller Automotriz</span>
+                            </div>
+                        </a>
+                    </div>
+
                     <div className="success-icon">✓</div>
                     <h1>¡Reserva Confirmada!</h1>
                     <p className="success-subtitle">{success.mensaje}</p>
@@ -543,21 +580,57 @@ const AgendarCita = () => {
                             <h4>💰 Precio Estimado</h4>
                             <div className="precio-estimado">
                                 <p className="precio-rango">
-                                    ${success.detalles.precioMin.toLocaleString('es-CO')} - ${success.detalles.precioMax.toLocaleString('es-CO')} COP
+                                    ${success.detalles.precioMin.toLocaleString('es-CO')} COP
                                 </p>
                                 <p className="precio-nota">*El precio final puede variar según el diagnóstico del vehículo</p>
                             </div>
                         </div>
                     </div>
 
+                    {success.esClienteNuevo && (
+                        <div className="credenciales-acceso">
+                            <h3>🔐 Acceso al Portal de Clientes</h3>
+                            <div className="credenciales-info">
+                                <p><strong>¡Bienvenido! Se ha creado su cuenta en nuestro sistema.</strong></p>
+                                <p>Sus credenciales de acceso son:</p>
+                                <div className="credenciales-datos">
+                                    <div className="credencial-item">
+                                        <span className="credencial-label">👤 Usuario:</span>
+                                        <span className="credencial-valor">{success.detalles.email}</span>
+                                    </div>
+                                    <div className="credencial-item">
+                                        <span className="credencial-label">🔑 Contraseña:</span>
+                                        <span className="credencial-valor">{success.detalles.identificacion}</span>
+                                    </div>
+                                </div>
+                                <p className="credenciales-importante">
+                                    ⚠️ <strong>IMPORTANTE:</strong> Ingrese al portal con estas credenciales para confirmar su reserva lo más pronto posible.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="instrucciones">
                         <h3>📌 Instrucciones Importantes</h3>
                         <ul>
+                            {!success.esClienteNuevo && (
+                                <li><strong>Por favor ingrese a su portal de clientes para confirmar su reserva lo más pronto posible</strong></li>
+                            )}
                             <li>Por favor llegue 10 minutos antes de su cita</li>
                             <li>Presente su documento de identificación al llegar</li>
                             <li>El administrador confirmará su llegada en el sistema</li>
                             <li>Le enviaremos un recordatorio por email y WhatsApp</li>
                         </ul>
+                    </div>
+
+                    <div className="portal-acceso-seccion">
+                        <div className="portal-acceso-card">
+                            <h3>🔐 Acceso al Portal de Clientes</h3>
+                            <p>Ingrese al portal para confirmar su reserva y gestionar sus citas</p>
+                            <a href="http://localhost:3009/login" className="btn btn-portal">
+                                Iniciar Sesión en el Portal
+                            </a>
+                        </div>
                     </div>
 
                     <div className="confirmacion-acciones">
@@ -704,16 +777,47 @@ const AgendarCita = () => {
                                 <div className="form-group" style={{ marginBottom: '20px' }}>
                                     <label>Seleccionar Vehículo Registrado</label>
                                     <select
+                                        value={vehiculoSeleccionadoId || ''}
                                         onChange={(e) => {
+                                            if (!e.target.value) {
+                                                // Si no hay vehículo seleccionado, resetear todo
+                                                setVehiculoSeleccionadoId(null);
+                                                setDatosVehiculo({
+                                                    placa: '',
+                                                    marca: '',
+                                                    modelo: '',
+                                                    anio: '',
+                                                    color: '',
+                                                    tipo_vehiculo: 'AUTOMOVIL',
+                                                    numero_motor: '',
+                                                    numero_chasis: ''
+                                                });
+                                                setMarcasDisponibles(getMarcasPorTipo('AUTOMOVIL'));
+                                                setModelosDisponibles([]);
+                                                return;
+                                            }
+
                                             const vehiculo = vehiculosCliente.find(v => v.vehiculo_id === e.target.value);
                                             if (vehiculo) {
+                                                setVehiculoSeleccionadoId(e.target.value);
+
+                                                // Actualizar listas de marcas y modelos según el tipo de vehículo
+                                                const tipoVehiculo = vehiculo.tipo_vehiculo || 'AUTOMOVIL';
+                                                const marca = vehiculo.marca || '';
+
+                                                const marcas = getMarcasPorTipo(tipoVehiculo);
+                                                const modelos = marca ? getModelosPorMarca(marca) : [];
+
+                                                setMarcasDisponibles(marcas);
+                                                setModelosDisponibles(modelos);
+
                                                 setDatosVehiculo({
                                                     placa: vehiculo.placa || '',
-                                                    marca: vehiculo.marca || '',
+                                                    marca: marca,
                                                     modelo: vehiculo.modelo || '',
                                                     anio: vehiculo.anio || '',
                                                     color: vehiculo.color || '',
-                                                    tipo_vehiculo: vehiculo.tipo_vehiculo || 'AUTOMOVIL',
+                                                    tipo_vehiculo: tipoVehiculo,
                                                     numero_motor: vehiculo.numero_motor || '',
                                                     numero_chasis: vehiculo.numero_chasis || ''
                                                 });
@@ -749,6 +853,7 @@ const AgendarCita = () => {
                                         value={datosVehiculo.placa}
                                         onChange={handleVehiculoChange}
                                         placeholder="ABC123"
+                                        disabled={vehiculoSeleccionadoId !== null}
                                         required
                                     />
                                 </div>
@@ -758,6 +863,7 @@ const AgendarCita = () => {
                                         name="tipo_vehiculo"
                                         value={datosVehiculo.tipo_vehiculo}
                                         onChange={handleVehiculoChange}
+                                        disabled={vehiculoSeleccionadoId !== null}
                                         required
                                     >
                                         <option value="AUTOMOVIL">Automóvil</option>
@@ -771,25 +877,33 @@ const AgendarCita = () => {
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Marca</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="marca"
                                         value={datosVehiculo.marca}
                                         onChange={handleVehiculoChange}
-                                        placeholder="Ej: Toyota"
+                                        disabled={vehiculoSeleccionadoId !== null}
                                         required
-                                    />
+                                    >
+                                        <option value="">Seleccione una marca</option>
+                                        {marcasDisponibles.map(marca => (
+                                            <option key={marca} value={marca}>{marca}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="form-group">
                                     <label>Modelo</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="modelo"
                                         value={datosVehiculo.modelo}
                                         onChange={handleVehiculoChange}
-                                        placeholder="Ej: Corolla"
+                                        disabled={vehiculoSeleccionadoId !== null || !datosVehiculo.marca || modelosDisponibles.length === 0}
                                         required
-                                    />
+                                    >
+                                        <option value="">Seleccione un modelo</option>
+                                        {modelosDisponibles.map(modelo => (
+                                            <option key={modelo} value={modelo}>{modelo}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 
@@ -804,6 +918,7 @@ const AgendarCita = () => {
                                         placeholder="2020"
                                         min="1900"
                                         max="2025"
+                                        disabled={vehiculoSeleccionadoId !== null}
                                         required
                                     />
                                 </div>
@@ -813,6 +928,7 @@ const AgendarCita = () => {
                                         type="text"
                                         name="color"
                                         value={datosVehiculo.color}
+                                        disabled={vehiculoSeleccionadoId !== null}
                                         onChange={handleVehiculoChange}
                                         placeholder="Ej: Blanco"
                                         required
@@ -829,6 +945,7 @@ const AgendarCita = () => {
                                         value={datosVehiculo.numero_motor}
                                         onChange={handleVehiculoChange}
                                         placeholder="Número de motor"
+                                        disabled={vehiculoSeleccionadoId !== null}
                                     />
                                 </div>
                                 <div className="form-group">
@@ -839,6 +956,7 @@ const AgendarCita = () => {
                                         value={datosVehiculo.numero_chasis}
                                         onChange={handleVehiculoChange}
                                         placeholder="Número de chasis"
+                                        disabled={vehiculoSeleccionadoId !== null}
                                     />
                                 </div>
                             </div>

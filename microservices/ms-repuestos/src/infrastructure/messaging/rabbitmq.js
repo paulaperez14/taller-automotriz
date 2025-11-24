@@ -21,14 +21,16 @@ const connectRabbitMQ = async () => {
 
 const getChannel = () => {
     if (!channel) {
-        throw new Error('RabbitMQ no está conectado');
+        console.warn('⚠️ RabbitMQ not available.');
+        return null;
     }
     return channel;
 };
 
 const publishEvent = async (exchange, routingKey, message) => {
     if (!channel) {
-        throw new Error('RabbitMQ no está conectado');
+        console.warn(`⚠️ Skipping event publication (RabbitMQ not available): ${routingKey}`);
+        return;
     }
 
     try {
@@ -40,8 +42,8 @@ const publishEvent = async (exchange, routingKey, message) => {
         );
         console.log(`📤 Evento publicado: ${routingKey}`);
     } catch (error) {
-        console.error('Error publicando evento:', error);
-        throw error;
+        console.error('⚠️ Error publicando evento:', error.message);
+        // No lanzar error para no bloquear la operación principal
     }
 };
 

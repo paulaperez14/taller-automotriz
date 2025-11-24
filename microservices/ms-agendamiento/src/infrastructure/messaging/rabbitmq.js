@@ -21,7 +21,8 @@ async function connectRabbitMQ() {
 
 async function publishEvent(exchange, routingKey, message) {
     if (!channel) {
-        throw new Error('RabbitMQ no está conectado');
+        console.warn(`⚠️ Skipping event publication (RabbitMQ not available): ${routingKey}`);
+        return;
     }
 
     try {
@@ -33,8 +34,8 @@ async function publishEvent(exchange, routingKey, message) {
         );
         console.log(`📤 Evento publicado: ${routingKey}`);
     } catch (error) {
-        console.error('Error publicando evento:', error);
-        throw error;
+        console.error('⚠️ Error publicando evento:', error.message);
+        // No lanzar error para no bloquear la operación principal
     }
 }
 

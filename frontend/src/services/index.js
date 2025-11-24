@@ -54,6 +54,7 @@ export const citaService = {
     cancel: (id) => api.delete(`/citas/${id}`),
     confirmar: (id) => api.post(`/citas/${id}/confirmar`),
     completar: (id) => api.post(`/citas/${id}/completar`),
+    completar: (id) => api.post(`/citas/${id}/completar`),
     cancelar: (id) => api.post(`/citas/${id}/cancelar`)
 };
 

@@ -22,13 +22,23 @@ app.get('/health', (req, res) => {
 const startServer = async () => {
     try {
         await initializePool();
-        await connectRabbitMQ();
+        console.log('✅ Database connected');
+
+        // Intentar conectar a RabbitMQ pero no bloquear el inicio
+        try {
+            await connectRabbitMQ();
+            console.log('✅ RabbitMQ connected');
+        } catch (error) {
+            console.error('⚠️ Error al conectar con RabbitMQ:', error.message);
+            console.log('⚠️ El servicio continuará sin RabbitMQ');
+        }
+
         app.listen(PORT, () => {
             console.log(`🚀 ms-agendamiento running on port ${PORT}`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);
-        process.exit(1);
+        setTimeout(startServer, 5000); // Reintentar después de 5 segundos
     }
 };
 

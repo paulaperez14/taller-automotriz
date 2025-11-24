@@ -25,7 +25,8 @@ const connectRabbitMQ = async () => {
 
 const getChannel = () => {
     if (!channel) {
-        throw new Error('RabbitMQ not initialized. Call connectRabbitMQ first.');
+        console.warn('⚠️ RabbitMQ not available. Events will not be published.');
+        return null;
     }
     return channel;
 };
@@ -33,11 +34,15 @@ const getChannel = () => {
 const publishEvent = async (exchange, routingKey, message) => {
     try {
         const ch = getChannel();
+        if (!ch) {
+            console.warn(`⚠️ Skipping event publication (RabbitMQ not available): ${routingKey}`);
+            return;
+        }
         ch.publish(exchange, routingKey, Buffer.from(JSON.stringify(message)));
         console.log(`📤 Evento publicado: ${routingKey}`);
     } catch (error) {
-        console.error('❌ Error al publicar evento:', error.message);
-        throw error;
+        console.error('⚠️ Error al publicar evento:', error.message);
+        // No lanzar error para no bloquear la operación principal
     }
 };
 

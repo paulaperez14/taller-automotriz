@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { vehiculoService, clienteService, citaService } from '../services';
+import { getMarcasPorTipo, getModelosPorMarca } from '../data/vehiculosData';
 
 const Vehiculos = () => {
     const [vehiculos, setVehiculos] = useState([]);
@@ -21,6 +22,8 @@ const Vehiculos = () => {
     const [todosClientes, setTodosClientes] = useState([]);
     const [clientesFiltrados, setClientesFiltrados] = useState([]);
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+    const [marcasDisponibles, setMarcasDisponibles] = useState([]);
+    const [modelosDisponibles, setModelosDisponibles] = useState([]);
     const [formData, setFormData] = useState({
         placa: '',
         marca: '',
@@ -38,6 +41,8 @@ const Vehiculos = () => {
     useEffect(() => {
         loadVehiculos();
         loadClientes();
+        // Inicializar marcas disponibles con automóviles por defecto
+        setMarcasDisponibles(getMarcasPorTipo('AUTOMOVIL'));
     }, []);
 
     const loadClientes = async () => {
@@ -113,6 +118,12 @@ const Vehiculos = () => {
 
     const handleEdit = (vehiculo) => {
         setEditingVehiculo(vehiculo);
+        // Inicializar marcas y modelos según el vehículo a editar
+        const marcas = getMarcasPorTipo(vehiculo.tipo_vehiculo);
+        setMarcasDisponibles(marcas);
+        const modelos = getModelosPorMarca(vehiculo.marca);
+        setModelosDisponibles(modelos);
+
         setFormData({
             placa: vehiculo.placa,
             marca: vehiculo.marca,
@@ -177,6 +188,8 @@ const Vehiculos = () => {
         setClienteEncontrado(null);
         setClientesFiltrados([]);
         setMostrarSugerencias(false);
+        setMarcasDisponibles(getMarcasPorTipo('AUTOMOVIL'));
+        setModelosDisponibles([]);
         setFormData({
             placa: '',
             marca: '',
@@ -188,6 +201,25 @@ const Vehiculos = () => {
             numero_chasis: '',
             cliente_id: ''
         });
+    };
+
+    const handleVehiculoChange = (e) => {
+        const { name, value } = e.target;
+
+        if (name === 'tipo_vehiculo') {
+            // Actualizar marcas disponibles según el tipo de vehículo
+            const nuevasMarcas = getMarcasPorTipo(value);
+            setMarcasDisponibles(nuevasMarcas);
+            setModelosDisponibles([]);
+            setFormData({ ...formData, tipo_vehiculo: value, marca: '', modelo: '' });
+        } else if (name === 'marca') {
+            // Actualizar modelos disponibles según la marca seleccionada
+            const nuevosModelos = getModelosPorMarca(value);
+            setModelosDisponibles(nuevosModelos);
+            setFormData({ ...formData, marca: value, modelo: '' });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     };
 
     const handleBusquedaClienteChange = (e) => {
@@ -453,8 +485,9 @@ const Vehiculos = () => {
                             <div className="form-group">
                                 <label>Tipo de Vehículo</label>
                                 <select
+                                    name="tipo_vehiculo"
                                     value={formData.tipo_vehiculo}
-                                    onChange={(e) => setFormData({ ...formData, tipo_vehiculo: e.target.value })}
+                                    onChange={handleVehiculoChange}
                                     required
                                 >
                                     <option value="AUTOMOVIL">Automóvil</option>
@@ -465,21 +498,32 @@ const Vehiculos = () => {
                             </div>
                             <div className="form-group">
                                 <label>Marca</label>
-                                <input
-                                    type="text"
+                                <select
+                                    name="marca"
                                     value={formData.marca}
-                                    onChange={(e) => setFormData({ ...formData, marca: e.target.value })}
+                                    onChange={handleVehiculoChange}
                                     required
-                                />
+                                >
+                                    <option value="">Seleccione una marca</option>
+                                    {marcasDisponibles.map(marca => (
+                                        <option key={marca} value={marca}>{marca}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>Modelo</label>
-                                <input
-                                    type="text"
+                                <select
+                                    name="modelo"
                                     value={formData.modelo}
-                                    onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
+                                    onChange={handleVehiculoChange}
+                                    disabled={!formData.marca || modelosDisponibles.length === 0}
                                     required
-                                />
+                                >
+                                    <option value="">Seleccione un modelo</option>
+                                    {modelosDisponibles.map(modelo => (
+                                        <option key={modelo} value={modelo}>{modelo}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="form-group">
                                 <label>Año</label>

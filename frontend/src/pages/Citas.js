@@ -77,25 +77,8 @@ const Citas = () => {
     const ejecutarAccion = async () => {
         try {
             if (confirmAction.action === 'confirmar') {
-                const response = await citaService.confirmar(confirmAction.citaId);
-
-                // Mostrar credenciales si se crearon
-                if (response.data.credenciales) {
-                    const cred = response.data.credenciales;
-                    alert(
-                        `✅ ¡Cita confirmada exitosamente!\n\n` +
-                        `🔐 Credenciales del Cliente:\n` +
-                        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-                        `👤 Usuario: ${cred.username}\n` +
-                        `🔑 Contraseña: ${cred.password}\n` +
-                        `📧 Email: ${cred.email}\n` +
-                        `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                        `⚠️ Importante: Proporcione estas credenciales al cliente.\n` +
-                        `Podrá acceder al portal web para ver su historial.`
-                    );
-                } else {
-                    showAlert('info', 'Cita confirmada. El cliente ya tenía credenciales.');
-                }
+                const response = await citaService.completar(confirmAction.citaId);
+                showAlert('success', 'Asistencia marcada exitosamente. Orden de servicio creada.');
                 await loadCitas();
             } else if (confirmAction.action === 'cancelar') {
                 await citaService.cancelar(confirmAction.citaId);
